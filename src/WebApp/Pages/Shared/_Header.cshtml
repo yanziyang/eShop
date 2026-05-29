@@ -1,0 +1,78 @@
+@using Microsoft.AspNetCore.Authentication
+@inject IHttpContextAccessor HttpContextAccessor
+@inject BasketState BasketState
+@{
+    var httpContext = HttpContextAccessor.HttpContext!;
+    var isAuthenticated = httpContext.User.Identity?.IsAuthenticated == true;
+    var userName = httpContext.User.Identity?.Name;
+    var isCatalog = ViewData["IsCatalog"] as bool? == true;
+    var headerImage = isCatalog ? "images/header-home.webp" : "images/header.webp";
+    var headerTitle = ViewData["HeaderTitle"] as string;
+    var headerSubtitle = ViewData["HeaderSubtitle"] as string;
+
+    IReadOnlyCollection<eShop.WebApp.Services.BasketItem> basketItems = [];
+    if (isAuthenticated)
+    {
+        try { basketItems = await BasketState.GetBasketItemsAsync(); }
+        catch { /* ignore basket errors in header */ }
+    }
+    var cartCount = basketItems.Sum(i => i.Quantity);
+}
+
+<div class="eshop-header @(isCatalog ? "home" : "")">
+    <div class="eshop-header-hero">
+        <img role="presentation" src="@headerImage" />
+    </div>
+    <div class="eshop-header-container">
+        <nav class="eshop-header-navbar">
+            <a class="logo logo-header" href="/">
+                <img alt="AdventureWorks" src="images/logo-header.svg" class="logo logo-header" />
+            </a>
+
+            @if (isAuthenticated)
+            {
+                <div class="dropdown-menu" x-data="{ open: false }">
+                    <h3>@userName</h3>
+                    <span class="dropdown-button" @@click="open = !open">
+                        <img role="presentation" src="icons/user.svg" />
+                    </span>
+                    <div class="dropdown-content" x-show="open" @@click.outside="open = false">
+                        <a class="dropdown-item" href="/user/orders">My orders</a>
+                        <form class="dropdown-item" method="post" action="/user/logout">
+                            @Html.AntiForgeryToken()
+                            <button type="submit">Log out</button>
+                        </form>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <a aria-label="Sign in" href="/user/login?returnUrl=@Uri.EscapeDataString(httpContext.Request.Path + httpContext.Request.QueryString)">
+                    <img role="presentation" src="icons/user.svg" />
+                </a>
+            }
+
+            <a aria-label="cart" href="/cart" class="cart-link">
+                <img role="presentation" src="icons/cart.svg" />
+                @if (cartCount > 0)
+                {
+                    <span class="cart-badge" id="cart-badge">@cartCount</span>
+                }
+                else
+                {
+                    <span class="cart-badge" id="cart-badge" style="display:none">0</span>
+                }
+            </a>
+        </nav>
+        <div class="eshop-header-intro">
+            @if (!string.IsNullOrEmpty(headerTitle))
+            {
+                <h1>@headerTitle</h1>
+            }
+            @if (!string.IsNullOrEmpty(headerSubtitle))
+            {
+                <p>@headerSubtitle</p>
+            }
+        </div>
+    </div>
+</div>

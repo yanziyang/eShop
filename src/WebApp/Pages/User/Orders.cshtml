@@ -1,0 +1,43 @@
+@page
+@model eShop.WebApp.Pages.User.OrdersModel
+@{
+    ViewData["Title"] = "Orders";
+    ViewData["HeaderTitle"] = "Orders";
+}
+
+<div class="orders">
+    @if (Model.Orders == null)
+    {
+        <p>Loading...</p>
+    }
+    else if (Model.Orders.Length == 0)
+    {
+        <p>You haven't yet placed any orders.</p>
+    }
+    else
+    {
+        <ul class="orders-list"
+            hx-get="/User/Orders?handler=Poll"
+            hx-trigger="every 10s"
+            hx-target="this"
+            hx-swap="outerHTML">
+            <li class="orders-header orders-item">
+                <div>Number</div>
+                <div>Date</div>
+                <div class="total-header">Total</div>
+                <div>Status</div>
+            </li>
+            @foreach (var order in Model.Orders)
+            {
+                <li class="orders-item">
+                    <div class="order-number">@order.OrderNumber</div>
+                    <div class="order-date">@order.Date.ToString("g")</div>
+                    <div class="order-total">$@order.Total.ToString("0.00")</div>
+                    <div class="order-status">
+                        <span class="status @order.Status.ToLower()">@order.Status</span>
+                    </div>
+                </li>
+            }
+        </ul>
+    }
+</div>

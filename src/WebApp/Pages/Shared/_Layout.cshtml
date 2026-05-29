@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="~/css/normalize.css" />
+    <link rel="stylesheet" href="~/css/app.css" />
+    <link rel="stylesheet" href="~/css/site.css" />
+    <link rel="shortcut icon" href="~/images/favicon.png" />
+    <title>@(ViewData["Title"] != null ? $"{ViewData["Title"]} | AdventureWorks" : "AdventureWorks")</title>
+    @RenderSection("head", required: false)
+</head>
+<body hx-boost="true">
+    @await Html.PartialAsync("_Header")
+    <main>
+        @RenderBody()
+    </main>
+    @await Html.PartialAsync("_Footer")
+
+    @* Chatbot panel (Alpine.js controlled, conditionally shown when AI is configured) *@
+    <div x-data="{ chatOpen: false }" x-cloak>
+        <button class="show-chatbot"
+                title="Show .NET Concierge"
+                @@click="chatOpen = !chatOpen"
+                x-show="true"
+                aria-label="Show chatbot">
+        </button>
+        <div class="floating-pane"
+             x-show="chatOpen"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:leave="transition ease-in duration-150">
+            <button class="hide-chatbot" title="Close .NET Concierge" @@click="chatOpen = false">✖</button>
+            <div class="chatbot-chat" id="chatbot-chat-area">
+                <p class="message message-assistant">Hi! I'm the AdventureWorks Concierge. How can I help?</p>
+                <div id="chatbot-messages"></div>
+            </div>
+            <form class="chatbot-input"
+                  hx-post="/Chat?handler=Send"
+                  hx-target="#chatbot-messages"
+                  hx-swap="beforeend"
+                  hx-on::after-request="this.reset(); document.getElementById('chatbot-chat-area').scrollTop = document.getElementById('chatbot-chat-area').scrollHeight">
+                @Html.AntiForgeryToken()
+                <textarea name="message" placeholder="Start chatting..."></textarea>
+                <button type="submit">Send</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="~/dist/app.js"></script>
+    @RenderSection("scripts", required: false)
+</body>
+</html>

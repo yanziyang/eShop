@@ -1,0 +1,16 @@
+{
+  "name": "webapp",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch"
+  },
+  "dependencies": {
+    "alpinejs": "^3.14.9",
+    "htmx.org": "^2.0.4"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.17",
+    "vite": "^6.3.5"
+  }
+}

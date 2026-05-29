@@ -1,0 +1,40 @@
+@page
+@model CartModel
+@{
+    ViewData["Title"] = "Shopping Bag";
+    ViewData["HeaderTitle"] = "Shopping bag";
+}
+
+<div class="cart">
+    @if (Model.BasketItems == null)
+    {
+        <p>Loading...</p>
+    }
+    else if (Model.BasketItems.Count == 0)
+    {
+        <p>Your shopping bag is empty. <a href="/">Continue shopping.</a></p>
+    }
+    else
+    {
+        @await Html.PartialAsync("_CartItems", Model.BasketItems)
+
+        <div class="cart-summary">
+            <div class="cart-summary-container">
+                <div class="cart-summary-header">
+                    <img role="presentation" src="icons/cart.svg" />
+                    Your shopping bag
+                    <span class="filter-badge">@Model.TotalQuantity</span>
+                </div>
+                <div class="cart-summary-total">
+                    <div>Total</div>
+                    <div>$@Model.TotalPrice?.ToString("0.00")</div>
+                </div>
+                <a href="/checkout" class="button button-primary">Check out</a>
+                <a href="/" class="cart-summary-link">
+                    <img role="presentation" src="icons/arrow-left.svg" />
+                    <p>Continue shopping</p>
+                </a>
+            </div>
+        </div>
+    }
+</div>
