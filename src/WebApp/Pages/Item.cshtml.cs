@@ -50,7 +50,13 @@ public class ItemModel(
     {
         if (!HttpContext.User.Identity!.IsAuthenticated)
         {
-            return Redirect($"/user/login?returnUrl={Uri.EscapeDataString(HttpContext.Request.Path)}");
+            var loginUrl = $"/user/login?returnUrl={Uri.EscapeDataString(HttpContext.Request.Path)}";
+            if (Request.Headers.ContainsKey("HX-Request"))
+            {
+                Response.Headers["HX-Redirect"] = loginUrl;
+                return new EmptyResult();
+            }
+            return Redirect(loginUrl);
         }
 
         Item = await catalogService.GetCatalogItem(Id);

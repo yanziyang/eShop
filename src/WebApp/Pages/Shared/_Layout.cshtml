@@ -10,9 +10,9 @@
     <title>@(ViewData["Title"] != null ? $"{ViewData["Title"]} | AdventureWorks" : "AdventureWorks")</title>
     @RenderSection("head", required: false)
 </head>
-<body hx-boost="true">
+<body>
     @await Html.PartialAsync("_Header")
-    <main>
+    <main hx-boost="true">
         @RenderBody()
     </main>
     @await Html.PartialAsync("_Footer")
