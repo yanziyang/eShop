@@ -1,0 +1,41 @@
+@model IReadOnlyCollection<eShop.WebApp.Services.BasketItem>
+@inject IProductImageUrlProvider ProductImages
+@{
+    var basketItems = Model;
+    decimal totalPrice = basketItems.Sum(i => i.Quantity * i.UnitPrice);
+    int totalQuantity = basketItems.Sum(i => i.Quantity);
+}
+
+<div id="cart-items" class="cart-items">
+    <div class="cart-item-header">
+        <div class="catalog-item-info">Products</div>
+        <div class="catalog-item-quantity">Quantity</div>
+        <div class="catalog-item-total">Total</div>
+    </div>
+    @foreach (var item in basketItems)
+    {
+        <div class="cart-item">
+            <div class="catalog-item-info">
+                <img alt="@item.ProductName" src="@ProductImages.GetProductImageUrl(item.ProductId)" />
+                <div class="catalog-item-content">
+                    <p class="name">@item.ProductName</p>
+                    <p class="price">$@item.UnitPrice.ToString("0.00")</p>
+                </div>
+            </div>
+            <div class="catalog-item-quantity">
+                <form hx-post="/Cart?handler=UpdateQuantity"
+                      hx-target="#cart-items"
+                      hx-swap="outerHTML">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="productId" value="@item.ProductId" />
+                    <input aria-label="product quantity" type="number" name="quantity"
+                           value="@item.Quantity" min="0" />
+                    <button type="submit" class="button button-secondary">Update</button>
+                </form>
+            </div>
+            <div class="catalog-item-total">
+                $@((item.UnitPrice * item.Quantity).ToString("0.00"))
+            </div>
+        </div>
+    }
+</div>

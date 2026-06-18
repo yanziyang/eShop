@@ -1,6 +1,4 @@
-﻿using System.Security.Claims;
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Authorization;
+using System.Security.Claims;
 using eShop.WebAppComponents.Catalog;
 using eShop.WebAppComponents.Services;
 
@@ -10,25 +8,17 @@ public class BasketState(
     BasketService basketService,
     CatalogService catalogService,
     OrderingService orderingService,
-    AuthenticationStateProvider authenticationStateProvider) : IBasketState
+    IHttpContextAccessor httpContextAccessor) : IBasketState
 {
     private Task<IReadOnlyCollection<BasketItem>>? _cachedBasket;
-    private HashSet<BasketStateChangedSubscription> _changeSubscriptions = new();
 
     public Task DeleteBasketAsync()
         => basketService.DeleteBasketAsync();
 
     public async Task<IReadOnlyCollection<BasketItem>> GetBasketItemsAsync()
-        => (await GetUserAsync()).Identity?.IsAuthenticated == true
+        => IsAuthenticated
         ? await FetchBasketItemsAsync()
         : [];
-
-    public IDisposable NotifyOnChange(EventCallback callback)
-    {
-        var subscription = new BasketStateChangedSubscription(this, callback);
-        _changeSubscriptions.Add(subscription);
-        return subscription;
-    }
 
     public async Task AddAsync(CatalogItem item)
     {
@@ -52,7 +42,6 @@ public class BasketState(
 
         _cachedBasket = null;
         await basketService.UpdateBasketAsync(items);
-        await NotifyChangeSubscribersAsync();
     }
 
     public async Task SetQuantityAsync(int productId, int quantity)
@@ -71,7 +60,6 @@ public class BasketState(
 
             _cachedBasket = null;
             await basketService.UpdateBasketAsync(existingItems.Select(i => new BasketQuantity(i.ProductId, i.Quantity)).ToList());
-            await NotifyChangeSubscribersAsync();
         }
     }
 
@@ -82,13 +70,11 @@ public class BasketState(
             checkoutInfo.RequestId = Guid.NewGuid();
         }
 
-        var buyerId = await authenticationStateProvider.GetBuyerIdAsync() ?? throw new InvalidOperationException("User does not have a buyer ID");
-        var userName = await authenticationStateProvider.GetUserNameAsync() ?? throw new InvalidOperationException("User does not have a user name");
+        var buyerId = GetBuyerId();
+        var userName = GetUserName();
 
-        // Get details for the items in the basket
         var orderItems = await FetchBasketItemsAsync();
 
-        // Call into Ordering.API to create the order using those details
         var request = new CreateOrderRequest(
             UserId: buyerId,
             UserName: userName,
@@ -104,15 +90,21 @@ public class BasketState(
             CardTypeId: checkoutInfo.CardTypeId,
             Buyer: buyerId,
             Items: [.. orderItems]);
+
         await orderingService.CreateOrder(request, checkoutInfo.RequestId);
         await DeleteBasketAsync();
     }
 
-    private Task NotifyChangeSubscribersAsync()
-        => Task.WhenAll(_changeSubscriptions.Select(s => s.NotifyAsync()));
+    private bool IsAuthenticated
+        => httpContextAccessor.HttpContext?.User.Identity?.IsAuthenticated == true;
 
-    private async Task<ClaimsPrincipal> GetUserAsync()
-        => (await authenticationStateProvider.GetAuthenticationStateAsync()).User;
+    private string GetBuyerId()
+        => httpContextAccessor.HttpContext?.User.FindFirst("sub")?.Value
+           ?? throw new InvalidOperationException("User does not have a buyer ID");
+
+    private string GetUserName()
+        => httpContextAccessor.HttpContext?.User.FindFirst("name")?.Value
+           ?? throw new InvalidOperationException("User does not have a user name");
 
     private Task<IReadOnlyCollection<BasketItem>> FetchBasketItemsAsync()
     {
@@ -126,7 +118,6 @@ public class BasketState(
                 return [];
             }
 
-            // Get details for the items in the basket
             var basketItems = new List<BasketItem>();
             var productIds = quantities.Select(row => row.ProductId);
             var catalogItems = (await catalogService.GetCatalogItems(productIds)).ToDictionary(k => k.Id, v => v);
@@ -135,7 +126,7 @@ public class BasketState(
                 var catalogItem = catalogItems[item.ProductId];
                 var orderItem = new BasketItem
                 {
-                    Id = Guid.NewGuid().ToString(), // TODO: this value is meaningless, use ProductId instead.
+                    Id = Guid.NewGuid().ToString(),
                     ProductId = catalogItem.Id,
                     ProductName = catalogItem.Name,
                     UnitPrice = catalogItem.Price,
@@ -146,12 +137,6 @@ public class BasketState(
 
             return basketItems;
         }
-    }
-
-    private class BasketStateChangedSubscription(BasketState Owner, EventCallback Callback) : IDisposable
-    {
-        public Task NotifyAsync() => Callback.InvokeAsync();
-        public void Dispose() => Owner._changeSubscriptions.Remove(this);
     }
 }
 

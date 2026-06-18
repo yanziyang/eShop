@@ -1,0 +1,69 @@
+@page
+@model CheckoutModel
+@{
+    ViewData["Title"] = "Checkout";
+    ViewData["HeaderTitle"] = "Checkout";
+}
+
+<div class="checkout">
+    <form method="post" asp-antiforgery="true">
+        <div class="form">
+            <div class="form-section">
+                <h2>Shipping address</h2>
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div asp-validation-summary="All" class="validation-message"></div>
+                }
+                <label>
+                    Address
+                    <input asp-for="Info.Street" type="text" />
+                    <span asp-validation-for="Info.Street" class="validation-message"></span>
+                </label>
+                <div class="form-group">
+                    <div class="form-group-item">
+                        <label>
+                            City
+                            <input asp-for="Info.City" type="text" />
+                            <span asp-validation-for="Info.City" class="validation-message"></span>
+                        </label>
+                    </div>
+                    <div class="form-group-item">
+                        <label>
+                            State
+                            <input asp-for="Info.State" type="text" />
+                            <span asp-validation-for="Info.State" class="validation-message"></span>
+                        </label>
+                    </div>
+                    <div class="form-group-item">
+                        <label>
+                            Zip code
+                            <input asp-for="Info.ZipCode" type="text" />
+                            <span asp-validation-for="Info.ZipCode" class="validation-message"></span>
+                        </label>
+                    </div>
+                </div>
+                <div>
+                    <label>
+                        Country
+                        <input asp-for="Info.Country" type="text" />
+                        <span asp-validation-for="Info.Country" class="validation-message"></span>
+                    </label>
+                </div>
+            </div>
+            <div class="form-section">
+                <div class="form-buttons">
+                    <a href="/cart" class="button button-secondary">
+                        <img role="presentation" src="icons/arrow-left.svg" />Back to the shopping bag
+                    </a>
+                    <button class="button button-primary" type="submit">Place order</button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section scripts {
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.21.0/dist/jquery.validate.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery-validation-unobtrusive@4.0.0/dist/jquery.validate.unobtrusive.min.js"></script>
+}

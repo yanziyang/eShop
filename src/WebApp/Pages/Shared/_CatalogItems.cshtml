@@ -1,0 +1,38 @@
+@model eShop.WebApp.Pages.CatalogItemsViewModel
+@inject IProductImageUrlProvider ProductImages
+@{
+    var items = Model.Items;
+    var totalPages = (int)Math.Ceiling(1.0 * Model.TotalCount / Model.PageSize);
+}
+
+<div id="catalog-content">
+    <div class="catalog-items">
+        @foreach (var item in items)
+        {
+            <div class="catalog-item">
+                <a class="catalog-product" href="/item/@item.Id">
+                    <span class="catalog-product-image">
+                        <img alt="@item.Name" src="@ProductImages.GetProductImageUrl(item)" />
+                    </span>
+                    <span class="catalog-product-content">
+                        <span class="name">@item.Name</span>
+                        <span class="price">$@item.Price.ToString("0.00")</span>
+                    </span>
+                </a>
+            </div>
+        }
+    </div>
+
+    @if (totalPages > 1)
+    {
+        <div class="page-links">
+            @for (int p = 1; p <= totalPages; p++)
+            {
+                var pageParam = p == 1 ? null : p.ToString();
+                var href = $"/?brand={Model.BrandId}&type={Model.ItemTypeId}&page={p}";
+                var isActive = p == Model.CurrentPage;
+                <a href="@href" class="@(isActive ? "active-page" : "")">@p</a>
+            }
+        </div>
+    }
+</div>

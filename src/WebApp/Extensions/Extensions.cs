@@ -1,10 +1,8 @@
-﻿using eShop.Basket.API.Grpc;
+using eShop.Basket.API.Grpc;
 using eShop.WebApp.Services.OrderStatus.IntegrationEvents;
 using eShop.WebAppComponents.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
-using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Components.Server;
 using Microsoft.Extensions.AI;
 using Microsoft.IdentityModel.JsonWebTokens;
 
@@ -61,7 +59,6 @@ public static class Extensions
         var callBackUrl = configuration.GetRequiredValue("CallBackUrl");
         var sessionCookieLifetime = configuration.GetValue("SessionCookieLifetimeMinutes", 60);
 
-        // Add Authentication services
         services.AddAuthorization();
         services.AddAuthentication(options =>
         {
@@ -85,10 +82,6 @@ public static class Extensions
             options.Scope.Add("orders");
             options.Scope.Add("basket");
         });
-
-        // Blazor auth services
-        services.AddScoped<AuthenticationStateProvider, ServerAuthenticationStateProvider>();
-        services.AddCascadingAuthenticationState();
     }
 
     private static void AddAIServices(this IHostApplicationBuilder builder)
@@ -106,19 +99,5 @@ public static class Extensions
         }
 
         chatClientBuilder?.UseFunctionInvocation();
-    }
-
-    public static async Task<string?> GetBuyerIdAsync(this AuthenticationStateProvider authenticationStateProvider)
-    {
-        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
-        return user.FindFirst("sub")?.Value;
-    }
-
-    public static async Task<string?> GetUserNameAsync(this AuthenticationStateProvider authenticationStateProvider)
-    {
-        var authState = await authenticationStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
-        return user.FindFirst("name")?.Value;
     }
 }

@@ -1,0 +1,67 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "AdventureWorks";
+    ViewData["IsCatalog"] = true;
+    ViewData["HeaderTitle"] = "Ready for a new adventure?";
+    ViewData["HeaderSubtitle"] = "Start the season with the latest in clothing and equipment.";
+}
+
+<div class="catalog">
+    @* Filter sidebar *@
+    <div class="catalog-search">
+        <div class="catalog-search-header">
+            <img role="presentation" src="icons/filters.svg" />
+            Filters
+        </div>
+        <div class="catalog-search-types">
+            <div class="catalog-search-group">
+                <h3>Brand</h3>
+                <div class="catalog-search-group-tags">
+                    <a href="@Url.Page("Index", new { type = Model.ItemTypeId })"
+                       class="catalog-search-tag @(Model.BrandId == null ? "active" : "")"
+                       hx-get="/?type=@Model.ItemTypeId"
+                       hx-target="#catalog-content"
+                       hx-push-url="true">All</a>
+                    @foreach (var brand in Model.Brands)
+                    {
+                        <a href="@Url.Page("Index", new { brand = brand.Id, type = Model.ItemTypeId })"
+                           class="catalog-search-tag @(Model.BrandId == brand.Id ? "active" : "")"
+                           hx-get="/?brand=@brand.Id&type=@Model.ItemTypeId"
+                           hx-target="#catalog-content"
+                           hx-push-url="true">@brand.Brand</a>
+                    }
+                </div>
+            </div>
+            <div class="catalog-search-group">
+                <h3>Type</h3>
+                <div class="catalog-search-group-tags">
+                    <a href="@Url.Page("Index", new { brand = Model.BrandId })"
+                       class="catalog-search-tag @(Model.ItemTypeId == null ? "active" : "")"
+                       hx-get="/?brand=@Model.BrandId"
+                       hx-target="#catalog-content"
+                       hx-push-url="true">All</a>
+                    @foreach (var itemType in Model.ItemTypes)
+                    {
+                        <a href="@Url.Page("Index", new { brand = Model.BrandId, type = itemType.Id })"
+                           class="catalog-search-tag @(Model.ItemTypeId == itemType.Id ? "active" : "")"
+                           hx-get="/?brand=@Model.BrandId&type=@itemType.Id"
+                           hx-target="#catalog-content"
+                           hx-push-url="true">@itemType.Type</a>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* Catalog items (HTMX target) *@
+    @await Html.PartialAsync("_CatalogItems", new CatalogItemsViewModel
+    {
+        Items = Model.CatalogItems,
+        TotalCount = Model.TotalCount,
+        PageSize = IndexModel.PageSize,
+        CurrentPage = Model.PageNum ?? 1,
+        BrandId = Model.BrandId,
+        ItemTypeId = Model.ItemTypeId
+    })
+</div>
